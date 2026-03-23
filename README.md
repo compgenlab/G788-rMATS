@@ -5,20 +5,41 @@ Differential Alternative Splicing Analysis with rMATS
 
 For this hands-on, we'll be looking at the differences in splicing between two human tissues from ENCODE. We're going to be comparing skin to liver.
 
-* [Prerequisites](#prerequisites)
-* [Align BAM files (STAR)](#alignment)
-* [Quantify expression (rsem)](#differential-expression-wrsem)
-* [Differential splicing (rMATS)](#differential-splicing-rmats)
-  * [Filtering significant events](#filtering-significant-events)
-  * [Finding interesting events](#finding-interesting-events)
-  * [Visualizing interesting events](#visualizing-interesting-events)
-* [Visualizing splicing (IGV)](#visualizing-splicing-igv)
-* [Downstream analysis](downstream.md)
-* [Downstream analysis](#downstream-analysis)
-  * [Sashimi plots (rmats2sashimiplot)](#sashimi-plots-rmats2sashimiplot)
-  * [Protein consequence (IsoformSwitchAnalyzeR)](#protein-consequence-isoformswitchanalyzer)
-  * [Functional enrichment](#functional-enrichment)
-  * [Validation](#validation)
+- [Differential Alternative Splicing Analysis with rMATS](#differential-alternative-splicing-analysis-with-rmats)
+  - [Prerequisites](#prerequisites)
+    - [Genome reference](#genome-reference)
+    - [Downloads](#downloads)
+      - [Example setup script](#example-setup-script)
+  - [Samples](#samples)
+    - [Downloading the files](#downloading-the-files)
+  - [Installing rMATS\_turbo](#installing-rmats_turbo)
+    - [Install rmats2sashimiplot](#install-rmats2sashimiplot)
+- [Alignment](#alignment)
+  - [Indexing BAM files](#indexing-bam-files)
+- [Analysis](#analysis)
+- [Differential expression w/rsem](#differential-expression-wrsem)
+  - [Build the RSEM reference](#build-the-rsem-reference)
+  - [Quantify each sample](#quantify-each-sample)
+  - [Differential expression](#differential-expression)
+- [Differential splicing rMATS](#differential-splicing-rmats)
+  - [Preparing input files](#preparing-input-files)
+  - [Running rMATS](#running-rmats)
+  - [Pitfalls and gotchas](#pitfalls-and-gotchas)
+  - [Output files](#output-files)
+    - [Key columns in the output](#key-columns-in-the-output)
+  - [Filtering significant events](#filtering-significant-events)
+  - [Finding interesting events](#finding-interesting-events)
+  - [Visualizing interesting events](#visualizing-interesting-events)
+- [Visualizing splicing (IGV)](#visualizing-splicing-igv)
+  - [Loading your data](#loading-your-data)
+  - [Navigating to a splicing event](#navigating-to-a-splicing-event)
+  - [Sashimi plots](#sashimi-plots)
+- [Tips and tricks](#tips-and-tricks)
+  - [Write scripts](#write-scripts)
+    - [Try to use a workflow/pipeline manager](#try-to-use-a-workflowpipeline-manager)
+    - [Write to tmp files](#write-to-tmp-files)
+  - [Keep your own reference files](#keep-your-own-reference-files)
+- [Additional resources](#additional-resources)
 
 ## Prerequisites
 
@@ -234,6 +255,12 @@ For STAR and rsem, we have modules available on Quartz. We can just use those wi
     conda activate rmats
 
 Now, if you type `rmats.py --help`, you should get the rMATS help text. 
+
+### Install rmats2sashimiplot
+
+rmats2sashimiplot is a visualization tool that works with the rMATs input files to make nice splicing graphics. It can also be installed with conda, so I recommend installing it in the same conda environment.
+
+    conda install -c bioconda -c conda-forge rmats2sashimiplot
 
 
 
