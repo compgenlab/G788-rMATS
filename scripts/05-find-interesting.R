@@ -10,7 +10,7 @@ library(dplyr)
 
 # --- Configuration -----------------------------------------------------------
 
-rmats_dir   <- "rmats_out/"
+rmats_dir   <- "rmats_output/"
 output_dir  <- "rmats_filtered/"
 
 min_delta_psi  <- 0.2    # minimum |ΔPSI|
@@ -33,6 +33,12 @@ for (event in event_types) {
 
   df <- read.table(infile, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
 
+  # Sum read counts across replicates (columns are comma-separated)
+  df$IJC1_sum <- sapply(strsplit(df$IJC_SAMPLE_1, ","), function(x) sum(as.numeric(x), na.rm = TRUE))
+  df$SJC1_sum <- sapply(strsplit(df$SJC_SAMPLE_1, ","), function(x) sum(as.numeric(x), na.rm = TRUE))
+  df$IJC2_sum <- sapply(strsplit(df$IJC_SAMPLE_2, ","), function(x) sum(as.numeric(x), na.rm = TRUE))
+  df$SJC2_sum <- sapply(strsplit(df$SJC_SAMPLE_2, ","), function(x) sum(as.numeric(x), na.rm = TRUE))
+
   # Within-group PSI standard deviation
   df$sd1 <- sapply(strsplit(df$IncLevel1, ","), function(x) sd(as.numeric(x), na.rm = TRUE))
   df$sd2 <- sapply(strsplit(df$IncLevel2, ","), function(x) sd(as.numeric(x), na.rm = TRUE))
@@ -41,8 +47,8 @@ for (event in event_types) {
     filter(
       FDR < max_fdr,
       abs(IncLevelDifference) > min_delta_psi,
-      IJC_SAMPLE_1 + SJC_SAMPLE_1 >= min_reads,
-      IJC_SAMPLE_2 + SJC_SAMPLE_2 >= min_reads,
+      IJC1_sum + SJC1_sum >= min_reads,
+      IJC2_sum + SJC2_sum >= min_reads,
       sd1 < max_sd,
       sd2 < max_sd
     ) %>%
