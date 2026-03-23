@@ -34,6 +34,7 @@ For this hands-on, we'll be looking at the differences in splicing between two h
   - [Loading your data](#loading-your-data)
   - [Navigating to a splicing event](#navigating-to-a-splicing-event)
   - [Sashimi plots](#sashimi-plots)
+- [Downstream Analysis](#downstream-analysis)
 - [Tips and tricks](#tips-and-tricks)
   - [Write scripts](#write-scripts)
     - [Try to use a workflow/pipeline manager](#try-to-use-a-workflowpipeline-manager)
@@ -579,6 +580,17 @@ Sashimi plots show junction-spanning reads as arcs, with arc thickness proportio
 You should see arcs connecting the exons. A differentially spliced exon will show clearly different arc weights between your liver and skin samples.
 
 > **Tip:** Group your tracks by condition (all liver together, all skin together) before generating the sashimi plot so the comparison is easy to read.
+
+
+# Downstream Analysis
+
+Splicing analysis is the first step. After you have identified the splice junctions that are differentially spliced, you'll want to understand what they mean biologically — what do these splicing changes do, and why are they happening?
+
+See [downstream.md](downstream.md) for approaches to:
+- Predicting protein consequences of splicing changes
+- Finding enriched biological processes
+- Identifying RNA-binding proteins that may be driving the splicing shift
+- Validating top hits experimentally
 
 
 # Tips and tricks

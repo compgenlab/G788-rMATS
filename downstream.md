@@ -6,6 +6,7 @@ After running rMATS, the following steps help interpret and validate your result
 * [Sashimi plots (rmats2sashimiplot)](#sashimi-plots-rmats2sashimiplot)
 * [Protein consequence (IsoformSwitchAnalyzeR)](#protein-consequence-isoformswitchanalyzer)
 * [Functional enrichment](#functional-enrichment)
+* [RNA-binding protein (RBP) motif analysis](#rna-binding-protein-rbp-motif-analysis)
 * [Validation](#validation)
 
 ## Sashimi plots (rmats2sashimiplot)
@@ -74,6 +75,68 @@ dotplot(ego)
 ```
 
 Alternatively, [g:Profiler](https://biit.cs.ut.ee/gprofiler/) provides a web interface if you prefer not to work in R.
+
+## RNA-binding protein (RBP) motif analysis
+
+If you observe a shift in splicing between your conditions, a natural next question is: *why?* Is there a common RNA-binding protein that regulates these events?
+
+Alternative splicing is controlled by RBPs that bind to regulatory sequences in or near the alternatively spliced exon (enhancers/silencers in the exon or flanking introns). If many of your differentially spliced events share a common RBP binding motif, that protein may be responsible for the shift.
+
+### Extract the sequences around differentially spliced exons
+
+For skipped exon (SE) events, pull the sequence of the alternative exon and its flanking intronic regions (~200 nt upstream and downstream):
+
+```r
+library(BSgenome.Hsapiens.UCSC.hg38)
+library(GenomicRanges)
+
+se <- read.table("SE_interesting.txt", header=TRUE, sep="\t")
+
+# Build GRanges for each alternative exon ± 200 nt flanking intronic sequence
+gr <- GRanges(
+  seqnames = se$chr,
+  ranges   = IRanges(start = se$exonStart_0base - 200,
+                     end   = se$exonEnd + 200),
+  strand   = se$strand
+)
+
+seqs <- getSeq(BSgenome.Hsapiens.UCSC.hg38, gr)
+writeXStringSet(seqs, "SE_interesting_seqs.fa")
+```
+
+### Find enriched motifs with MEME
+
+[MEME-Suite](https://meme-suite.org/) is the standard tool for discovering enriched sequence motifs. Run MEME on the sequences you extracted above, looking for short motifs (4–8 nt is typical for RBP binding sites):
+
+```bash
+meme SE_interesting_seqs.fa \
+  -rna \
+  -mod zoops \
+  -minw 4 -maxw 8 \
+  -nmotifs 10 \
+  -oc meme_out/
+```
+
+Then compare the discovered motifs to known RBP binding motifs using **Tomtom** (also part of MEME-Suite) against the [CISBP-RNA](https://cisbp-rna.ccbr.utoronto.ca/) or [ATtRACT](https://attract.cnic.es/) databases:
+
+```bash
+tomtom meme_out/meme.txt db/cisbp-rna.meme -oc tomtom_out/
+```
+
+### Alternative: FIMO for known motif scanning
+
+If you already have a candidate RBP in mind, use **FIMO** to scan your sequences for its known binding motif:
+
+```bash
+fimo --oc fimo_out/ db/rbp_motif.meme SE_interesting_seqs.fa
+```
+
+### Interpreting results
+
+- A single enriched motif present in many of your differentially spliced events points to a specific RBP as a likely driver
+- Cross-reference with your differential expression results: is the RBP itself differentially expressed between your conditions?
+- Check the [ENCODE eCLIP](https://www.encodeproject.org/) database for binding sites of the candidate RBP in your cell/tissue type
+
 
 ## Validation
 
