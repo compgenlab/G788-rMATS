@@ -1,13 +1,24 @@
 Differential Alternative Splicing Analysis with rMATS
 ===
 
+> **Note:** Pre-generated BAM files for this tutorial are available on Scratch at `/N/scratch/mbreese/rMATS_class`
+
 For this hands-on, we'll be looking at the differences in splicing between two human tissues from ENCODE. We're going to be comparing skin to liver.
 
 * [Prerequisites](#prerequisites)
 * [Align BAM files (STAR)](#alignment)
 * [Quantify expression (rsem)](#differential-expression-wrsem)
 * [Differential splicing (rMATS)](#differential-splicing-rmats)
+  * [Filtering significant events](#filtering-significant-events)
+  * [Finding interesting events](#finding-interesting-events)
+  * [Visualizing interesting events](#visualizing-interesting-events)
 * [Visualizing splicing (IGV)](#visualizing-splicing-igv)
+* [Downstream analysis](downstream.md)
+* [Downstream analysis](#downstream-analysis)
+  * [Sashimi plots (rmats2sashimiplot)](#sashimi-plots-rmats2sashimiplot)
+  * [Protein consequence (IsoformSwitchAnalyzeR)](#protein-consequence-isoformswitchanalyzer)
+  * [Functional enrichment](#functional-enrichment)
+  * [Validation](#validation)
 
 ## Prerequisites
 
@@ -330,6 +341,9 @@ Collect the `expected_count` column from each `*.genes.results` file and load in
 
 rMATS detects differential alternative splicing events between two groups of samples by comparing the percent-spliced-in (PSI / Ψ) values at each annotated splicing event.
 
+![Alternative splicing event types](img/alternative_splicing_1.png)
+*Alternative splicing event types. Source: [BTEP Coding Club rMATS tutorial](https://bioinformatics.ccr.cancer.gov/docs/btep-coding-club/CC2023/rmats/)*
+
 ## Preparing input files
 
 rMATS takes two plain-text files listing the BAM paths for each condition — one BAM path per line **or** all paths comma-separated on a single line. Comma-separated on one line is the standard approach:
@@ -366,9 +380,45 @@ Key flags:
 
 This will take a while to run (30–60 min depending on resources).
 
+## Pitfalls and gotchas
+
+**Wrong `--readLength`**
+This is the most common mistake. `--readLength` must exactly match the length of your reads — off by even 1bp will cause rMATS to miss junction-spanning reads or crash. Check your actual read length:
+```bash
+zcat fastq/ENCSR000AEU_rep1_R1.fastq.gz | head -2 | tail -1 | tr -d '\n' | wc -c
+```
+
+**Trimmed or variable-length reads**
+If your reads were adapter-trimmed, they are no longer a uniform length. Pass `--variable-read-length` to handle this:
+```bash
+rmats.py ... --variable-read-length
+```
+Note: this flag cannot be used together with a fixed `--readLength`.
+
+**Missing `--libType` (strandedness)**
+By default rMATS assumes unstranded data (`--libType fr-unstranded`). Total RNA-seq libraries from ENCODE are typically reverse-stranded — use `--libType fr-firststrand`. Using the wrong setting produces incorrect PSI estimates.
+```bash
+rmats.py ... --libType fr-firststrand
+```
+
+**`--gtf` must match your STAR index**
+The GTF passed to rMATS should be the same version used to build the STAR genome index. Mismatched versions cause events to go undetected or coordinates to be wrong.
+
+**The `--tmp` directory fills up**
+rMATS writes large intermediate files to `--tmp`. Make sure the filesystem has enough space (several GB for large datasets) and that the directory exists before you run.
+
+**You need at least 2 replicates per group for statistics**
+rMATS requires a minimum of 2 samples per condition to fit its statistical model. With only 1 sample per group it will run but report `NA` for p-values.
+
+**BAM files must be sorted and indexed**
+rMATS will fail silently or crash if BAMs are not coordinate-sorted and indexed (`.bai` present). See [Indexing BAM files](#indexing-bam-files).
+
 ## Output files
 
 rMATS reports five types of alternative splicing events. For each type you get two result files:
+
+![rMATS output directory](img/alternative_splicing_7.png)
+*rMATS output directory structure. Source: [BTEP Coding Club rMATS tutorial](https://bioinformatics.ccr.cancer.gov/docs/btep-coding-club/CC2023/rmats/)*
 
 | Event type | Abbreviation | Description |
 |---|---|---|
@@ -383,6 +433,12 @@ For each event type there are two output files:
 - `SE.MATS.JCEC.txt` — counts from junction reads **plus exon body reads**
 
 For most purposes, `JCEC` is the more complete count matrix. Use `JC` when reads are short relative to the exon size.
+
+![rMATS output file example](img/alternative_splicing_8.png)
+*Example rMATS output file (MATS.JC.txt). Source: [BTEP Coding Club rMATS tutorial](https://bioinformatics.ccr.cancer.gov/docs/btep-coding-club/CC2023/rmats/)*
+
+![rMATS summary](img/alternative_splicing_11.png)
+*rMATS results summary file. Source: [BTEP Coding Club rMATS tutorial](https://bioinformatics.ccr.cancer.gov/docs/btep-coding-club/CC2023/rmats/)*
 
 ### Key columns in the output
 
@@ -405,12 +461,71 @@ awk -F'\t' 'NR==1 || ($20 < 0.05 && ($22 > 0.1 || $22 < -0.1))' \
 
 > Note: Column numbers can shift depending on event type. Check the header line to confirm which columns are `FDR` and `IncLevelDifference`.
 
+## Finding interesting events
+
+After applying a basic FDR and ΔPSI filter you may still have hundreds of events. Here's how to prioritize the most biologically interesting ones.
+
+**What to look for:**
+
+- **Large ΔPSI** — Events with |ΔPSI| > 0.2–0.5 represent substantial splicing changes and are easier to validate
+- **Near-complete switches** — One condition PSI ≈ 0, the other ≈ 1 are the most striking and interpretable
+- **Consistent replicates** — The comma-separated values in `IncLevel1`/`IncLevel2` should be similar within each group; high variance within a group suggests a noisy event
+- **Sufficient read coverage** — Low junction read counts (IJC + SJC < 10–20) produce unreliable PSI estimates regardless of FDR
+
+**Filtering in R** (see [`scripts/05-find-interesting.R`](scripts/05-find-interesting.R) for a ready-to-run version covering all event types):
+
+```r
+library(dplyr)
+
+se <- read.table("rmats_out/SE.MATS.JCEC.txt", header=TRUE, sep="\t")
+
+# Summarize per-replicate PSI variance within each group
+se$sd1 <- sapply(strsplit(se$IncLevel1, ","), function(x) sd(as.numeric(x), na.rm=TRUE))
+se$sd2 <- sapply(strsplit(se$IncLevel2, ","), function(x) sd(as.numeric(x), na.rm=TRUE))
+
+interesting <- se %>%
+  filter(
+    FDR < 0.05,
+    abs(IncLevelDifference) > 0.2,
+    IJC_SAMPLE_1 + SJC_SAMPLE_1 >= 20,
+    IJC_SAMPLE_2 + SJC_SAMPLE_2 >= 20,
+    sd1 < 0.15,
+    sd2 < 0.15
+  ) %>%
+  arrange(FDR)
+
+write.table(interesting, "SE_interesting.txt", sep="\t", quote=FALSE, row.names=FALSE)
+```
+
+## Visualizing interesting events
+
+Once you have a shortlist, use `rmats2sashimiplot` to generate sashimi plots for all of them at once:
+
+```bash
+rmats2sashimiplot \
+  --b1 b1.txt \
+  --b2 b2.txt \
+  --event-type SE \
+  -e SE_interesting.txt \
+  --l1 Liver \
+  --l2 Skin \
+  -o sashimi_out/
+```
+
+Each event gets its own plot showing junction-spanning read arcs with PSI values labeled per condition. For a closer look at any individual event, load the BAM files into IGV and navigate to the event coordinates (see [Visualizing splicing (IGV)](#visualizing-splicing-igv) below).
+
 
 # Visualizing splicing (IGV)
 
 Once you have a list of significant splicing events, IGV is a good way to visually confirm them and build intuition for what the splicing changes look like at the read level.
 
 ![IGV sashimi plot](img/igv.png)
+
+![rmats2sashimiplot example](img/alternative_splicing_12.png)
+*Sashimi plot generated by rmats2sashimiplot. Source: [BTEP Coding Club rMATS tutorial](https://bioinformatics.ccr.cancer.gov/docs/btep-coding-club/CC2023/rmats/)*
+
+![rmats2sashimiplot high quality example](img/alternative_splicing_13.png)
+*High-quality sashimi plot showing splicing event with read coverage and junction counts. Source: [BTEP Coding Club rMATS tutorial](https://bioinformatics.ccr.cancer.gov/docs/btep-coding-club/CC2023/rmats/)*
 
 ## Loading your data
 
