@@ -12,8 +12,9 @@ rmats.py \
   --b2 liver.txt \
   --gtf ref/gencode.v49.annotation.gtf \
   -t paired \
-  --readLength 100 \
+  --readLength 101 \
   --nthread 8 \
+  --tstat 8 \
   --od rmats_output/ \
   --tmp rmats_tmp/ \
   --libType fr-firststrand
