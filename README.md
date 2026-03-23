@@ -38,6 +38,7 @@ For this hands-on, we'll be looking at the differences in splicing between two h
   - [Write scripts](#write-scripts)
     - [Try to use a workflow/pipeline manager](#try-to-use-a-workflowpipeline-manager)
     - [Write to tmp files](#write-to-tmp-files)
+  - [Use `screen` or `tmux` for long-running sessions](#use-screen-or-tmux-for-long-running-sessions)
   - [Keep your own reference files](#keep-your-own-reference-files)
 - [Additional resources](#additional-resources)
 
@@ -607,6 +608,30 @@ Example:
 
 In this example, we are running a long calculation. It may finish correctly or it might error out. We are gzip compressing our output to save disk space. Unless we are tracking if the job completed, we won't know from the files if it worked. By writing to a temp file and using `&& mv ` to rename the temp file to the final file name, we make it possible to know if the job finished successfully -- the output file exists (success) or the tmp file exists (failure).
 
+
+## Use `screen` or `tmux` for long-running sessions
+
+When working on a cluster's interactive node (or even the head node), your SSH connection can drop and kill any running jobs. To keep your sessions alive, use a terminal multiplexer like `screen` or `tmux`.
+
+**screen** — simple and available on almost every system:
+```bash
+screen -S rmats          # start a new named session
+# ... run your commands ...
+# Ctrl+A, then D          # detach (session keeps running)
+screen -r rmats          # reattach later
+screen -ls               # list active sessions
+```
+
+**tmux** — more features, also widely available:
+```bash
+tmux new -s rmats        # start a new named session
+# ... run your commands ...
+# Ctrl+B, then D          # detach (session keeps running)
+tmux attach -t rmats     # reattach later
+tmux ls                  # list active sessions
+```
+
+Both tools keep your session running even if you disconnect, which is essential for long jobs like STAR alignment or rMATS. Start a session at the beginning of your work day and reattach to it whenever you reconnect.
 
 ## Keep your own reference files
 
