@@ -370,7 +370,7 @@ Collect the `expected_count` column from each `*.genes.results` file and load in
 
 rMATS detects differential alternative splicing events between two groups of samples by comparing the percent-spliced-in (PSI / Ψ) values at each annotated splicing event.
 
-![Alternative splicing event types](img/alternative_splicing_1.png)
+<img src="img/alternative_splicing_1.png" width="400" alt="Alternative splicing event types">
 *Alternative splicing event types. Source: [BTEP Coding Club rMATS tutorial](https://bioinformatics.ccr.cancer.gov/docs/btep-coding-club/CC2023/rmats/)*
 
 ## Preparing input files
@@ -579,7 +579,7 @@ You should see arcs connecting the exons. A differentially spliced exon will sho
 
 > **Tip:** Right-click on the sashimi plot to use the "Set Junction Coverage Min" value to hide low-count junctions.
 
-![IGV plot](img/sashimi_context_menu.png)
+<img src="img/sashimi_context_menu.png" width="400" alt="IGV plot">
 
 ![IGV plot](img/sashimi_trimmed.png)
 
