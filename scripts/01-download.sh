@@ -1,54 +1,44 @@
 #!/bin/bash
 
 cd $(dirname $0)
+mkdir -p fastq
 
-echo "file	pair	repl	sample	tissue	url" > pairs.txt
-tabl export 'File accession','Paired end','Biological replicate(s)','Experiment accession','Biosample term name','File download URL' samples.txt | tail -n +2 >> pairs.txt
+echo "tissue	file	pair	repl	sample	url" > pairs.txt
+while read -r line; do
+        echo "heart     $line" >> pairs.txt
+done < <(grep 'File accession\|heart\|atrium' samples.txt | tabl export 'File accession','Paired end','Biological replicate(s)','Experiment accession','File download URL' - | tail -n +2)
+while read -r line; do
+        echo "skin      $line" >> pairs.txt
+done < <(grep 'File accession\|skin' samples.txt | tabl export 'File accession','Paired end','Biological replicate(s)','Experiment accession','File download URL' - | tail -n +2)
 
-while read -r file pair repl sample tissue url; do
-if [ $file = "file" ]; then
-	continue
-fi
-FQ=$file.fastq.gz
-FQ2="fastq/${sample}_rep${repl}_R${pair}.fastq.gz"
+while read -r tissue file pair repl sample url; do
+FQ2="fastq/${tissue}_${sample}_rep${repl}_R${pair}.fastq.gz"
 if [ -e "$FQ2" ]; then
-	echo "$FQ2 downloaded"
-	continue
+        echo "$FQ2 downloaded"
+        continue
 fi
-if [ -e "$FQ" ]; then
-	mv $FQ $FQ2
-	continue
-fi
-curl -LO $url > $FQ2.tmp && mv $FQ2.tmp $FQ2
-done < pairs.txt
+curl --silent -L $url > $FQ2.tmp && mv $FQ2.tmp $FQ2 &
+done < <(tail -n +2 pairs.txt)
 
 
-cd ref/
-if [ ! -e GRCh38.p14.genome.fa.gz ]; then
-curl -LO https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/latest_release/GRCh38.p14.genome.fa.gz
-fi
-cd ..
-
-
-LIVER=""
+HEART=""
 SKIN=""
-while read -r file pair repl sample tissue url; do
+while read -r tissue file pair repl sample url; do
 if [ "$pair" = "1" ]; then
-BAM="align/${sample}_rep${repl}/${sample}_rep${repl}.Aligned.sortedByCoord.out.bam"
-LIVER="$LIVER,$BAM"
+BAM="align/${tissue}_${sample}_rep${repl}/${tissue}_${sample}_rep${repl}.Aligned.sortedByCoord.out.bam"
+HEART="$HEART,$BAM"
 fi
-done < <(grep 'liver' pairs.txt)
+done < <(grep 'heart' pairs.txt)
 
-while read -r file pair repl sample tissue url; do
+while read -r tissue file pair repl sample url; do
 if [ "$pair" = "1" ]; then
-BAM="align/${sample}_rep${repl}/${sample}_rep${repl}.Aligned.sortedByCoord.out.bam"
+BAM="align/${tissue}_${sample}_rep${repl}/${tissue}_${sample}_rep${repl}.Aligned.sortedByCoord.out.bam"
 SKIN="$SKIN,$BAM"
 fi
 done < <(grep 'skin' pairs.txt)
 
-LIVER="${LIVER#,}"
+HEART="${HEART#,}"
 SKIN="${SKIN#,}"
 
-echo $LIVER > liver.txt
+echo $HEART > heart.txt
 echo $SKIN > skin.txt
-
