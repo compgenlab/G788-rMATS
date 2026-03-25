@@ -581,7 +581,7 @@ You should see arcs connecting the exons. A differentially spliced exon will sho
 
 > **Tip:** Group your tracks by condition (all liver together, all skin together) before generating the sashimi plot so the comparison is easy to read.
 
-> **Tip:** It is difficult if you have too many samples on a sashimi plot. Make one large BAM file for each condition and use that for your plot to make the comparison easier to read. You hide sample-sample variability, but it makes an individual plot easier to interpret.
+> **Tip:** It is difficult if you have too many samples on a sashimi plot. Make one large BAM file for each condition and use that for your plot to make the comparison easier to read. You hide sample-sample variability, but it makes an individual plot easier to interpret. You can also use a single representative sample to do the same thing.
 
 > **Tip:** Right-click on the sashimi plot to use the "Set Junction Coverage Min" value to hide low-count junctions.
 
