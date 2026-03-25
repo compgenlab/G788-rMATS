@@ -35,7 +35,7 @@ For this hands-on, we'll be looking at the differences in splicing between two h
   - [Navigating to a splicing event](#navigating-to-a-splicing-event)
   - [Sashimi plots](#sashimi-plots)
 - [Downstream Analysis](#downstream-analysis)
-- [Tips and tricks](#tips-and-tricks)
+- [HPC Tips and tricks](#hpc-tips-and-tricks)
   - [Write scripts](#write-scripts)
     - [Try to use a workflow/pipeline manager](#try-to-use-a-workflowpipeline-manager)
     - [Write to tmp files](#write-to-tmp-files)
@@ -598,7 +598,7 @@ See [downstream.md](downstream.md) for approaches to:
 - Validating top hits experimentally
 
 
-# Tips and tricks
+# HPC Tips and tricks
 
 ## Write scripts
 
