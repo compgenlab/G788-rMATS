@@ -398,6 +398,7 @@ rmats.py \
   --tmp rmats_tmp/ \
   -t paired \
   --readLength 101 \
+  --libType fr-firststrand \
   --nthread 8 \
   --tstat 8
 ```
@@ -405,6 +406,7 @@ rmats.py \
 Key flags:
 - `-t paired` — paired-end reads
 - `--readLength` — the length of your reads (check your FASTQ headers if unsure)
+- `--libType fr-firststrand` — strandedness of the library; ENCODE total RNA-seq is reverse-stranded
 - `--tstat` — threads used for the statistical model (can match `--nthread`)
 
 This will take a while to run (30–60 min depending on resources).
