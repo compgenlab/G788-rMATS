@@ -670,6 +670,8 @@ It takes disk space to keep your own copy of reference sequences, but if you hav
 
 # Additional resources
 
+* [rMATS GitHub repository](https://github.com/Xinglab/rmats-turbo) — source code, documentation, and issue tracker for rMATS-turbo
+* [rMATS paper](https://doi.org/10.1073/pnas.1419161111) — Shen et al. (2014) *PNAS* — the original rMATS publication
 * [Differential Alternative Splicing Analysis with rMATS](https://bioinformatics.ccr.cancer.gov/docs/btep-coding-club/CC2023/rmats/) — BTEP Coding Club tutorial covering rMATS on the NIH Biowulf cluster, output interpretation, and complementary tools (RSEM, IsoformSwitchAnalyzeR, DEXSeq)
 
 ---
