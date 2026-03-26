@@ -3,7 +3,22 @@ Differential Alternative Splicing Analysis with rMATS
 
 > **Note:** Pre-generated BAM files for this tutorial are available on Scratch at `/N/scratch/mbreese/rMATS_class`
 
+> **Understanding alternative splicing differences is critical**—but conventional gene expression tools (like DESeq2) measure *how much* a gene is turned on/off, not *which parts of the gene are included/excluded. Two tissues can have identical gene expression levels yet vastly different protein products due to splicing. This is why rMATS exists: to detect which splicing events (e.g., exon skipping) differ significantly between conditions.
+
+> **Note:** Pre-generated BAM files for this tutorial are available on Scratch at `/N/scratch/mbreese/rMATS_class`
+
 For this hands-on, we'll be looking at the differences in splicing between two human tissues from ENCODE. We're going to be comparing skin to liver.
+## The PSI Framework
+
+Two tissues can have identical gene expression (DESeq2: not significant) yet different protein isoforms due to splicing. rMATS detects which splicing events differ significantly.
+
+rMATS compares **Percent Spliced In (PSI, Ψ)** values quantifying the proportion of transcripts including a specific exon.
+
+- **PSI = 1**: Exon always included  
+- **PSI = 0**: Exon always skipped  
+- **ΔPSI**: Difference in PSI between conditions
+
+rMATS identifies events where **FDR < 0.05 and |ΔPSI| > 0.1**, indicating splicing changes likely biologically relevant.
 
 - [Differential Alternative Splicing Analysis with rMATS](#differential-alternative-splicing-analysis-with-rmats)
   - [Prerequisites](#prerequisites)
@@ -13,6 +28,12 @@ For this hands-on, we'll be looking at the differences in splicing between two h
   - [Samples](#samples)
     - [Downloading the files](#downloading-the-files)
   - [Installing rMATS\_turbo](#installing-rmats_turbo)
+> **Common Pitfalls:**
+> - `--readLength` must match exact read length (off by 1bp breaks rMATS)
+> - Minimum 2 replicates per group (1 replicate/group → NA p-values)
+> - BAM must be sorted/indexed (rMATS silently fails if not)
+> - `--gtf` must match STAR index (mismatched versions → missed events)
+> - Verify `--readLength`: `zcat file.fastq.gz | head -2 | tail -1 | tr -d '\n' | wc -c`
     - [Install rmats2sashimiplot](#install-rmats2sashimiplot)
 - [Alignment](#alignment)
   - [Indexing BAM files](#indexing-bam-files)
