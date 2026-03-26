@@ -3,22 +3,9 @@ Differential Alternative Splicing Analysis with rMATS
 
 > **Note:** Pre-generated BAM files for this tutorial are available on Scratch at `/N/scratch/mbreese/rMATS_class`
 
-> **Understanding alternative splicing differences is critical**—but conventional gene expression tools (like DESeq2) measure *how much* a gene is turned on/off, not *which parts of the gene are included/excluded. Two tissues can have identical gene expression levels yet vastly different protein products due to splicing. This is why rMATS exists: to detect which splicing events (e.g., exon skipping) differ significantly between conditions.
-
-> **Note:** Pre-generated BAM files for this tutorial are available on Scratch at `/N/scratch/mbreese/rMATS_class`
+**Understanding alternative splicing differences is critical**—but conventional gene expression tools (like DESeq2) measure *how much* a gene is turned on/off, not *which parts of the gene are included/excluded. Two tissues can have identical gene expression levels yet vastly different protein products due to splicing. This is why rMATS exists: to detect which splicing events (e.g., exon skipping) differ significantly between conditions.
 
 For this hands-on, we'll be looking at the differences in splicing between two human tissues from ENCODE. We're going to be comparing skin to liver.
-## The PSI Framework
-
-Two tissues can have identical gene expression (DESeq2: not significant) yet different protein isoforms due to splicing. rMATS detects which splicing events differ significantly.
-
-rMATS compares **Percent Spliced In (PSI, Ψ)** values quantifying the proportion of transcripts including a specific exon.
-
-- **PSI = 1**: Exon always included  
-- **PSI = 0**: Exon always skipped  
-- **ΔPSI**: Difference in PSI between conditions
-
-rMATS identifies events where **FDR < 0.05 and |ΔPSI| > 0.1**, indicating splicing changes likely biologically relevant.
 
 - [Differential Alternative Splicing Analysis with rMATS](#differential-alternative-splicing-analysis-with-rmats)
   - [Prerequisites](#prerequisites)
@@ -43,6 +30,7 @@ rMATS identifies events where **FDR < 0.05 and |ΔPSI| > 0.1**, indicating splic
   - [Quantify each sample](#quantify-each-sample)
   - [Differential expression](#differential-expression)
 - [Differential splicing rMATS](#differential-splicing-rmats)
+  - [PSI Framework](#psi-framework)
   - [Preparing input files](#preparing-input-files)
   - [Running rMATS](#running-rmats)
   - [Pitfalls and gotchas](#pitfalls-and-gotchas)
@@ -389,7 +377,18 @@ Collect the `expected_count` column from each `*.genes.results` file and load in
 
 # Differential splicing rMATS
 
-rMATS detects differential alternative splicing events between two groups of samples by comparing the percent-spliced-in (PSI / Ψ) values at each annotated splicing event.
+## PSI Framework
+
+Two tissues can have identical gene expression (DESeq2: not significant) yet different protein isoforms due to splicing. rMATS detects differential alternative splicing events between two groups of samples by comparing the percent-spliced-in (PSI / Ψ) values at each annotated splicing event.
+
+rMATS compares **Percent Spliced In (PSI, Ψ)** values quantifying the proportion of transcripts including a specific exon.
+
+- **PSI = 1**: Exon always included  
+- **PSI = 0**: Exon always skipped  
+- **ΔPSI**: Difference in PSI between conditions
+
+rMATS identifies events where **FDR < 0.05 and |ΔPSI| > 0.1**, indicating splicing changes likely biologically relevant.
+
 
 <img src="img/alternative_splicing_1.png" width="400" alt="Alternative splicing event types">
 *Alternative splicing event types. Source: [BTEP Coding Club rMATS tutorial](https://bioinformatics.ccr.cancer.gov/docs/btep-coding-club/CC2023/rmats/)*
